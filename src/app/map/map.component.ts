@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -12,11 +12,12 @@ import { Vector as VectorSource } from 'ol/source';
 import { Style, Icon, Fill, Stroke, Text, Circle } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import Geometry from 'ol/geom/Geometry';
+import { PopupComponent } from '../popup/popup.component';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PopupComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss'
 })
@@ -25,6 +26,14 @@ export class MapComponent implements AfterViewInit {
   
   // Eiffel Tower coordinates (longitude, latitude)
   private eiffelTowerCoords = [2.2945, 48.8584];
+  
+  // Popup data
+  popupTitle: string = '';
+  popupContent: string = '';
+  popupLink: string = '';
+  popupVisible: boolean = false;
+  
+  @ViewChild(PopupComponent) popupComponent!: PopupComponent;
 
   constructor() { }
 
@@ -104,67 +113,51 @@ export class MapComponent implements AfterViewInit {
       })
     });
     
-    // Create popup element
-    const popupElement = document.createElement('div');
-    popupElement.className = 'ol-popup';
-    
-    const popupContent = document.createElement('div');
-    popupContent.className = 'ol-popup-content';
-    popupElement.appendChild(popupContent);
-    
-    const popupCloser = document.createElement('a');
-    popupCloser.className = 'ol-popup-closer';
-    popupCloser.href = '#';
-    popupElement.appendChild(popupCloser);
-    
-    // Add popup to the map
-    const popup = new Overlay({
-      element: popupElement,
-      positioning: 'bottom-center',
-      stopEvent: false,
-      offset: [0, -10]
-    });
-    this.map.addOverlay(popup);
-    
-    // Add click handler to close the popup
-    popupCloser.addEventListener('click', (e) => {
-      e.preventDefault();
-      popup.setPosition(undefined);
-      popupCloser.blur();
-      return false;
-    });
-    
-    // Add click handler to show popup when clicking on the feature
-    this.map.on('click', (evt) => {
-      const feature = this.map.forEachFeatureAtPixel(evt.pixel, (feature) => feature);
-      
-      if (feature && feature === eiffelTowerFeature) {
-        const geometry = feature.getGeometry();
-        if (geometry && geometry instanceof Point) {
-          const coordinates = geometry.getCoordinates();
-          const name = feature.get('name');
-          const description = feature.get('description');
+    // Create popup overlay
+    setTimeout(() => {
+      if (this.popupComponent) {
+        const popupOverlay = new Overlay({
+          element: this.popupComponent.getElement(),
+          positioning: 'bottom-center',
+          stopEvent: false,
+          offset: [0, -10]
+        });
+        
+        this.map.addOverlay(popupOverlay);
+        
+        // Add click handler to show popup when clicking on the feature
+        this.map.on('click', (evt) => {
+          const feature = this.map.forEachFeatureAtPixel(evt.pixel, (feature) => feature);
           
-          popupContent.innerHTML = `
-            <h3>${name}</h3>
-            <p>${description}</p>
-            <p><a href="https://en.wikipedia.org/wiki/Eiffel_Tower" target="_blank">Learn more</a></p>
-          `;
-          
-          popup.setPosition(coordinates);
-        }
-      } else {
-        popup.setPosition(undefined);
+          if (feature && feature === eiffelTowerFeature) {
+            const geometry = feature.getGeometry();
+            if (geometry && geometry instanceof Point) {
+              const coordinates = geometry.getCoordinates();
+              
+              // Set popup content
+              this.popupTitle = feature.get('name');
+              this.popupContent = feature.get('description');
+              this.popupLink = 'https://en.wikipedia.org/wiki/Eiffel_Tower';
+              this.popupVisible = true;
+              
+              // Position the popup
+              popupOverlay.setPosition(coordinates);
+            }
+          } else {
+            this.popupVisible = false;
+            popupOverlay.setPosition(undefined);
+          }
+        });
+        
+        // Change cursor style when hovering over the feature
+        this.map.on('pointermove', (e) => {
+          const pixel = this.map.getEventPixel(e.originalEvent);
+          const hit = this.map.hasFeatureAtPixel(pixel);
+          const target = this.map.getTarget() as HTMLElement;
+          target.style.cursor = hit ? 'pointer' : '';
+        });
       }
-    });
-    
-    // Change cursor style when hovering over the feature
-    this.map.on('pointermove', (e) => {
-      const pixel = this.map.getEventPixel(e.originalEvent);
-      const hit = this.map.hasFeatureAtPixel(pixel);
-      const target = this.map.getTarget() as HTMLElement;
-      target.style.cursor = hit ? 'pointer' : '';
-    });
+    }, 0);
     
     // Force a resize after map initialization
     setTimeout(() => {
@@ -181,5 +174,9 @@ export class MapComponent implements AfterViewInit {
       };
       img.src = 'assets/marker.png';
     }, 200);
+  }
+  
+  onPopupClose(): void {
+    this.popupVisible = false;
   }
 }

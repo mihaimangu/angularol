@@ -1,0 +1,10 @@
+<div class="ol-popup" [class.visible]="visible">
+  <a href="#" class="ol-popup-closer" (click)="closePopup(); $event.preventDefault()"></a>
+  <div class="ol-popup-content">
+    <h3 *ngIf="title">{{ title }}</h3>
+    <p *ngIf="content">{{ content }}</p>
+    <p *ngIf="link">
+      <a [href]="link" target="_blank">{{ linkText }}</a>
+    </p>
+  </div>
+</div>
