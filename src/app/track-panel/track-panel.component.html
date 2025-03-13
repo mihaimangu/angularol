@@ -1,0 +1,40 @@
+<div class="track-panel" *ngIf="visible">
+  <div class="panel-header">
+    <h3>New Manual Track</h3>
+    <button class="close-button" (click)="closePanel()">✖</button>
+  </div>
+  
+  <div class="panel-content">
+    <div class="form-group">
+      <label for="trackName">Track Name:</label>
+      <input 
+        type="text" 
+        id="trackName" 
+        name="trackName" 
+        [(ngModel)]="trackName" 
+        placeholder="Enter track name"
+        required
+      >
+    </div>
+    
+    <div class="coordinates-section">
+      <h4>Starting Position</h4>
+      <div class="starting-position" *ngIf="coordinates.length > 0">
+        <div class="coordinate-value">{{ formatCoordinate(coordinates[0]) }}</div>
+      </div>
+      <div class="empty-state" *ngIf="coordinates.length === 0">
+        <p>No starting position selected. Right-click on the map to select a position.</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="panel-footer">
+    <button 
+      class="save-button" 
+      [disabled]="!trackName.trim() || coordinates.length === 0"
+      (click)="saveTrack()"
+    >
+      Save Track
+    </button>
+  </div>
+</div>

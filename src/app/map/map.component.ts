@@ -4,7 +4,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { Vector as VectorLayer } from 'ol/layer';
@@ -13,16 +13,20 @@ import { Style, Icon, Fill, Stroke, Text, Circle } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import Geometry from 'ol/geom/Geometry';
 import { PopupComponent } from '../popup/popup.component';
+import { ContextMenuComponent } from '../context-menu/context-menu.component';
+import { TrackPanelComponent, TrackCoordinate } from '../track-panel/track-panel.component';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule, PopupComponent],
+  imports: [CommonModule, PopupComponent, ContextMenuComponent, TrackPanelComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss'
 })
 export class MapComponent implements AfterViewInit {
   private map!: Map;
+  private vectorSource!: VectorSource;
+  private startingPositionFeature: Feature | null = null;
   
   // Eiffel Tower coordinates (longitude, latitude)
   private eiffelTowerCoords = [2.2945, 48.8584];
@@ -33,7 +37,21 @@ export class MapComponent implements AfterViewInit {
   popupLink: string = '';
   popupVisible: boolean = false;
   
+  // Context menu data
+  contextMenuX: number = 0;
+  contextMenuY: number = 0;
+  contextMenuVisible: boolean = false;
+  
+  // Track panel data
+  trackPanelVisible: boolean = false;
+  trackCoordinates: TrackCoordinate[] = [];
+  
+  // Store the clicked coordinates for track creation
+  private clickedCoordinates: number[] = [];
+  
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
+  @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
+  @ViewChild(TrackPanelComponent) trackPanelComponent!: TrackPanelComponent;
 
   constructor() { }
 
@@ -88,13 +106,13 @@ export class MapComponent implements AfterViewInit {
       })
     });
 
-    // Vector source and layer for the marker
-    const vectorSource = new VectorSource({
+    // Vector source and layer for the markers
+    this.vectorSource = new VectorSource({
       features: [eiffelTowerFeature]
     });
 
     const vectorLayer = new VectorLayer({
-      source: vectorSource,
+      source: this.vectorSource,
       zIndex: 10 // Ensure the marker is on top of other layers
     });
 
@@ -127,6 +145,9 @@ export class MapComponent implements AfterViewInit {
         
         // Add click handler to show popup when clicking on the feature
         this.map.on('click', (evt) => {
+          // Hide context menu on regular click
+          this.contextMenuVisible = false;
+          
           const feature = this.map.forEachFeatureAtPixel(evt.pixel, (feature) => feature);
           
           if (feature && feature === eiffelTowerFeature) {
@@ -147,6 +168,21 @@ export class MapComponent implements AfterViewInit {
             this.popupVisible = false;
             popupOverlay.setPosition(undefined);
           }
+        });
+        
+        // Add context menu on right-click
+        this.map.getViewport().addEventListener('contextmenu', (evt) => {
+          evt.preventDefault();
+          
+          // Get the clicked coordinates
+          const pixel = this.map.getEventPixel(evt);
+          const coordinate = this.map.getCoordinateFromPixel(pixel);
+          this.clickedCoordinates = coordinate;
+          
+          // Show context menu at click position
+          this.contextMenuX = evt.clientX;
+          this.contextMenuY = evt.clientY;
+          this.contextMenuVisible = true;
         });
         
         // Change cursor style when hovering over the feature
@@ -176,7 +212,124 @@ export class MapComponent implements AfterViewInit {
     }, 200);
   }
   
+  /**
+   * Handle popup close event
+   */
   onPopupClose(): void {
     this.popupVisible = false;
+  }
+  
+  /**
+   * Handle context menu close event
+   */
+  onContextMenuClose(): void {
+    this.contextMenuVisible = false;
+  }
+  
+  /**
+   * Handle create track event from context menu
+   */
+  onCreateTrack(): void {
+    // Convert clicked coordinates to lon/lat
+    if (this.clickedCoordinates.length > 0) {
+      const lonLat = toLonLat(this.clickedCoordinates);
+      
+      // Clear previous coordinates and add the new one
+      this.trackCoordinates = [{
+        lon: lonLat[0],
+        lat: lonLat[1]
+      }];
+      
+      // Add a marker at the starting position
+      this.addStartingPositionMarker(this.clickedCoordinates);
+      
+      // Show track panel
+      this.trackPanelVisible = true;
+    }
+  }
+  
+  /**
+   * Add a marker at the starting position
+   */
+  private addStartingPositionMarker(coordinates: number[]): void {
+    // Remove previous starting position marker if it exists
+    if (this.startingPositionFeature) {
+      this.vectorSource.removeFeature(this.startingPositionFeature);
+    }
+    
+    // Create a new feature for the starting position
+    this.startingPositionFeature = new Feature({
+      geometry: new Point(coordinates),
+      name: 'Starting Position'
+    });
+    
+    // Style for the starting position marker
+    this.startingPositionFeature.setStyle(
+      new Style({
+        image: new Circle({
+          radius: 8,
+          fill: new Fill({ color: 'rgba(0, 128, 255, 0.7)' }),
+          stroke: new Stroke({ color: '#fff', width: 2 })
+        }),
+        text: new Text({
+          text: 'Starting Position',
+          font: 'bold 12px Arial',
+          fill: new Fill({ color: '#333' }),
+          stroke: new Stroke({ color: '#fff', width: 3 }),
+          offsetY: -20
+        })
+      })
+    );
+    
+    // Add the feature to the map
+    this.vectorSource.addFeature(this.startingPositionFeature);
+  }
+  
+  /**
+   * Handle track panel close event
+   */
+  onTrackPanelClose(): void {
+    this.trackPanelVisible = false;
+    
+    // Remove the starting position marker when closing without saving
+    if (this.startingPositionFeature) {
+      this.vectorSource.removeFeature(this.startingPositionFeature);
+      this.startingPositionFeature = null;
+    }
+  }
+  
+  /**
+   * Handle save track event
+   */
+  onSaveTrack(trackData: {name: string, startingPosition: TrackCoordinate}): void {
+    console.log('Track saved:', trackData);
+    // Here you would typically save the track to a database or local storage
+    
+    // For demonstration, we'll just log it
+    alert(`Track "${trackData.name}" saved with starting position at Lat: ${trackData.startingPosition.lat.toFixed(6)}, Lon: ${trackData.startingPosition.lon.toFixed(6)}`);
+    
+    // Keep the marker on the map after saving
+    if (this.startingPositionFeature) {
+      // Update the marker text to show the track name
+      this.startingPositionFeature.setStyle(
+        new Style({
+          image: new Circle({
+            radius: 8,
+            fill: new Fill({ color: 'rgba(0, 128, 255, 0.7)' }),
+            stroke: new Stroke({ color: '#fff', width: 2 })
+          }),
+          text: new Text({
+            text: trackData.name,
+            font: 'bold 12px Arial',
+            fill: new Fill({ color: '#333' }),
+            stroke: new Stroke({ color: '#fff', width: 3 }),
+            offsetY: -20
+          })
+        })
+      );
+    }
+    
+    // Clear the coordinates for the next track
+    this.trackCoordinates = [];
   }
 }

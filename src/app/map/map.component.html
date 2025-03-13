@@ -1,4 +1,6 @@
 <div id="map" class="map-container"></div>
+
+<!-- Popup component -->
 <app-popup 
   [title]="popupTitle" 
   [content]="popupContent" 
@@ -6,3 +8,20 @@
   [visible]="popupVisible"
   (close)="onPopupClose()">
 </app-popup>
+
+<!-- Context menu component -->
+<app-context-menu
+  [x]="contextMenuX"
+  [y]="contextMenuY"
+  [visible]="contextMenuVisible"
+  (createTrack)="onCreateTrack()"
+  (close)="onContextMenuClose()">
+</app-context-menu>
+
+<!-- Track panel component -->
+<app-track-panel
+  [visible]="trackPanelVisible"
+  [coordinates]="trackCoordinates"
+  (close)="onTrackPanelClose()"
+  (save)="onSaveTrack($event)">
+</app-track-panel>
