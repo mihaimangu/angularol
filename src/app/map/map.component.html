@@ -48,3 +48,16 @@
     </tbody>
   </table>
 </div>
+
+<!-- Element Details Panel -->
+<div class="element-details-panel" *ngIf="elementDetailsVisible">
+  <div class="panel-header">
+    <h3>Element Details</h3>
+    <button (click)="closeElementDetails()">Close</button>
+  </div>
+  <div class="panel-content">
+    <p><strong>Name:</strong> {{ selectedElement?.name }}</p>
+    <p><strong>Latitude:</strong> {{ selectedElement?.coordinate.lat }}</p>
+    <p><strong>Longitude:</strong> {{ selectedElement?.coordinate.lon }}</p>
+  </div>
+</div>
