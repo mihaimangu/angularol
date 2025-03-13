@@ -15,6 +15,8 @@ import Geometry from 'ol/geom/Geometry';
 import { PopupComponent } from '../popup/popup.component';
 import { ContextMenuComponent } from '../context-menu/context-menu.component';
 import { TrackPanelComponent, TrackCoordinate } from '../track-panel/track-panel.component';
+import { ManualTracksService } from '../services/manual-tracks.service';
+import { ManualTrack } from '../services/manual-tracks.service';
 
 @Component({
   selector: 'app-map',
@@ -23,7 +25,7 @@ import { TrackPanelComponent, TrackCoordinate } from '../track-panel/track-panel
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss'
 })
-export class MapComponent implements AfterViewInit {
+export class MapComponent implements OnInit, AfterViewInit {
   private map!: Map;
   private vectorSource!: VectorSource;
   private startingPositionFeature: Feature | null = null;
@@ -45,6 +47,7 @@ export class MapComponent implements AfterViewInit {
   // Track panel data
   trackPanelVisible: boolean = false;
   trackCoordinates: TrackCoordinate[] = [];
+  manualTracks: ManualTrack[] = [];
   
   // Store the clicked coordinates for track creation
   private clickedCoordinates: number[] = [];
@@ -53,7 +56,16 @@ export class MapComponent implements AfterViewInit {
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
   @ViewChild(TrackPanelComponent) trackPanelComponent!: TrackPanelComponent;
 
-  constructor() { }
+  constructor(private manualTracksService: ManualTracksService) { }
+
+  ngOnInit(): void {
+    this.manualTracksService.getTracks().subscribe((tracks: ManualTrack[]) => {
+      this.manualTracks = tracks;
+      if (this.vectorSource) {
+        this.updateManualTrackMarkers();
+      }
+    });
+  }
 
   ngAfterViewInit(): void {
     // Add a small delay to ensure the DOM is fully rendered
@@ -130,6 +142,8 @@ export class MapComponent implements AfterViewInit {
         zoom: 16 // Zoom in a bit more to see the Eiffel Tower better
       })
     });
+    
+    this.updateManualTrackMarkers();
     
     // Create popup overlay
     setTimeout(() => {
@@ -304,9 +318,9 @@ export class MapComponent implements AfterViewInit {
   onSaveTrack(trackData: {name: string, startingPosition: TrackCoordinate}): void {
     console.log('Track saved:', trackData);
     // Here you would typically save the track to a database or local storage
-    
-    // For demonstration, we'll just log it
-    alert(`Track "${trackData.name}" saved with starting position at Lat: ${trackData.startingPosition.lat.toFixed(6)}, Lon: ${trackData.startingPosition.lon.toFixed(6)}`);
+  
+
+    this.saveManualTrack(trackData.name);
     
     // Keep the marker on the map after saving
     if (this.startingPositionFeature) {
@@ -331,5 +345,53 @@ export class MapComponent implements AfterViewInit {
     
     // Clear the coordinates for the next track
     this.trackCoordinates = [];
+  }
+  
+  /* Add new method to save a manual track using ManualTracksService */
+  saveManualTrack(name: string): void {
+    if (this.clickedCoordinates && this.clickedCoordinates.length >= 2) {
+      const lonLat = toLonLat(this.clickedCoordinates);
+      const trackCoordinate: TrackCoordinate = { lat: lonLat[1], lon: lonLat[0] };
+      this.manualTracksService.addTrack({ name, startingPosition: trackCoordinate });
+      console.log('Manual element added:', name, trackCoordinate);
+    }
+  }
+  
+  private updateManualTrackMarkers(): void {
+    if (!this.vectorSource) { return; }
+
+    // Remove previous manual track markers
+    this.vectorSource.getFeatures().forEach(feature => {
+      if (feature.get('manualElement')) {
+        this.vectorSource.removeFeature(feature);
+      }
+    });
+
+    // Add a marker for each manual track with its name as a label
+    this.manualTracks.forEach(track => {
+      const coordinates = fromLonLat([track.startingPosition.lon, track.startingPosition.lat]);
+      const markerFeature = new Feature({
+        geometry: new Point(coordinates),
+        name: track.name
+      });
+
+      markerFeature.setStyle(new Style({
+        image: new Circle({
+          radius: 8,
+          fill: new Fill({ color: 'rgba(0, 128, 255, 0.8)' }),
+          stroke: new Stroke({ color: '#fff', width: 2 })
+        }),
+        text: new Text({
+          text: track.name,
+          font: 'bold 12px Arial',
+          fill: new Fill({ color: '#333' }),
+          stroke: new Stroke({ color: '#fff', width: 3 }),
+          offsetY: -20
+        })
+      }));
+
+      markerFeature.set('manualElement', true);
+      this.vectorSource.addFeature(markerFeature);
+    });
   }
 }

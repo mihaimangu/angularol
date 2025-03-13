@@ -1,6 +1,6 @@
 <div class="track-panel" *ngIf="visible">
   <div class="panel-header">
-    <h3>New Manual Track</h3>
+    <h3>New Manual Element</h3>
     <button class="close-button" (click)="closePanel()">✖</button>
   </div>
   
@@ -12,7 +12,7 @@
         id="trackName" 
         name="trackName" 
         [(ngModel)]="trackName" 
-        placeholder="Enter track name"
+        placeholder="Enter element name"
         required
       >
     </div>
@@ -34,7 +34,7 @@
       [disabled]="!trackName.trim() || coordinates.length === 0"
       (click)="saveTrack()"
     >
-      Save Track
+      Save Element
     </button>
   </div>
 </div>

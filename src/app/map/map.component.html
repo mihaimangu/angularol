@@ -25,3 +25,26 @@
   (close)="onTrackPanelClose()"
   (save)="onSaveTrack($event)">
 </app-track-panel>
+
+<!-- Manual Elements Table -->
+<div class="manual-tracks-table">
+  <h3>Manual Elements</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Latitude</th>
+        <th>Longitude</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let element of manualTracks">
+        <td>{{ element.id }}</td>
+        <td>{{ element.name }}</td>
+        <td>{{ element.startingPosition.lat }}</td>
+        <td>{{ element.startingPosition.lon }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
