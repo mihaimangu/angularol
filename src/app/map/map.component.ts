@@ -54,6 +54,30 @@ export class MapComponent implements OnInit, AfterViewInit {
   // Store the clicked coordinates for track creation
   private clickedCoordinates: number[] = [];
   
+  // Add this color palette array as a class property after the other properties
+  private colorPalette: string[] = [
+    'rgba(66, 133, 244, 0.8)',   // Blue
+    'rgba(219, 68, 55, 0.8)',    // Red
+    'rgba(244, 180, 0, 0.8)',    // Yellow
+    'rgba(15, 157, 88, 0.8)',    // Green
+    'rgba(171, 71, 188, 0.8)',   // Purple
+    'rgba(255, 112, 67, 0.8)',   // Orange
+    'rgba(0, 172, 193, 0.8)',    // Cyan
+    'rgba(124, 179, 66, 0.8)',   // Light green
+    'rgba(3, 169, 244, 0.8)',    // Light blue
+    'rgba(229, 57, 53, 0.8)',    // Bright red
+    'rgba(253, 216, 53, 0.8)',   // Bright yellow
+    'rgba(76, 175, 80, 0.8)',    // Medium green
+    'rgba(156, 39, 176, 0.8)',   // Medium purple
+    'rgba(255, 87, 34, 0.8)',    // Deep orange
+    'rgba(0, 188, 212, 0.8)',    // Teal
+    'rgba(139, 195, 74, 0.8)',   // Lime
+    'rgba(33, 150, 243, 0.8)',   // Light blue 2
+    'rgba(244, 67, 54, 0.8)',    // Red 2
+    'rgba(255, 235, 59, 0.8)',   // Yellow 2
+    'rgba(0, 150, 136, 0.8)'     // Teal 2
+  ];
+  
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
   @ViewChild(TrackPanelComponent) trackPanelComponent!: TrackPanelComponent;
@@ -408,25 +432,30 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
 
     // Add a marker for each manual track with its name as a label
-    this.manualTracks.forEach(track => {
+    this.manualTracks.forEach((track, trackIndex) => {
+      // Get color for this track (cycle through palette if more than 20 tracks)
+      const colorIndex = trackIndex % this.colorPalette.length;
+      const trackColor = this.colorPalette[colorIndex];
+      
       // Process each waypoint in the track
-      track.waypoints.forEach((waypoint, index) => {
+      track.waypoints.forEach((waypoint, waypointIndex) => {
         const coordinates = fromLonLat([waypoint.lon, waypoint.lat]);
         const markerFeature = new Feature({
           geometry: new Point(coordinates),
           name: track.name,
           trackId: track.id,
-          waypointIndex: index
+          waypointIndex: waypointIndex
         });
 
-        // Style for the marker - use different colors for first vs other waypoints
-        const markerColor = index === 0 ? 'rgba(0, 128, 255, 0.8)' : 'rgba(255, 128, 0, 0.8)';
-        const markerText = index === 0 ? track.name : `${track.name} (pt ${index + 1})`;
+        // Same color for all waypoints in a track, but add waypoint number to label
+        const markerText = waypointIndex === 0 ? 
+                          track.name : 
+                          `${track.name} (pt ${waypointIndex + 1})`;
         
         markerFeature.setStyle(new Style({
           image: new Circle({
             radius: 8,
-            fill: new Fill({ color: markerColor }),
+            fill: new Fill({ color: trackColor }),
             stroke: new Stroke({ color: '#fff', width: 2 })
           }),
           text: new Text({
