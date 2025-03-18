@@ -12,6 +12,7 @@ import { Vector as VectorSource } from 'ol/source';
 import { Style, Icon, Fill, Stroke, Text, Circle } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import Geometry from 'ol/geom/Geometry';
+import LineString from 'ol/geom/LineString';
 import { PopupComponent } from '../popup/popup.component';
 import { ContextMenuComponent } from '../context-menu/context-menu.component';
 import { TrackPanelComponent, TrackCoordinate } from '../track-panel/track-panel.component';
@@ -77,6 +78,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     'rgba(255, 235, 59, 0.8)',   // Yellow 2
     'rgba(0, 150, 136, 0.8)'     // Teal 2
   ];
+  
+  // Add a new class property to track the currently selected track ID
+  private selectedTrackId: number | null = null;
   
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
@@ -221,11 +225,16 @@ export class MapComponent implements OnInit, AfterViewInit {
                   // Find the track with this ID
                   const track = this.manualTracks.find(t => t.id === trackId);
                   if (track) {
+                    // Set this as the selected track
+                    this.selectedTrackId = trackId;
                     this.selectedElement = {
                       name: track.name,
                       waypoints: [...track.waypoints]
                     };
                     this.elementDetailsVisible = true;
+                    
+                    // Update the markers to highlight the selected track
+                    this.updateManualTrackMarkers();
                   }
                 }
               } else {
@@ -426,7 +435,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     // Remove previous manual track markers
     this.vectorSource.getFeatures().forEach(feature => {
-      if (feature.get('manualElement')) {
+      if (feature.get('manualElement') || feature.get('trackLine')) {
         this.vectorSource.removeFeature(feature);
       }
     });
@@ -437,9 +446,18 @@ export class MapComponent implements OnInit, AfterViewInit {
       const colorIndex = trackIndex % this.colorPalette.length;
       const trackColor = this.colorPalette[colorIndex];
       
+      // Check if this track is selected
+      const isSelected = track.id === this.selectedTrackId;
+      
+      // Create an array to hold all waypoint coordinates for this track
+      const lineCoordinates: number[][] = [];
+      
       // Process each waypoint in the track
       track.waypoints.forEach((waypoint, waypointIndex) => {
         const coordinates = fromLonLat([waypoint.lon, waypoint.lat]);
+        // Add to line coordinates array
+        lineCoordinates.push(coordinates);
+        
         const markerFeature = new Feature({
           geometry: new Point(coordinates),
           name: track.name,
@@ -452,17 +470,27 @@ export class MapComponent implements OnInit, AfterViewInit {
                           track.name : 
                           `${track.name} (pt ${waypointIndex + 1})`;
         
+        // Apply enhanced styling for selected track
+        const radius = isSelected ? 12 : 8;  // Larger radius for selected track
+        const fontSize = isSelected ? 'bold 14px Arial' : 'bold 12px Arial';  // Larger font for selected track
+        
         markerFeature.setStyle(new Style({
           image: new Circle({
-            radius: 8,
+            radius: radius,
             fill: new Fill({ color: trackColor }),
-            stroke: new Stroke({ color: '#fff', width: 2 })
+            stroke: new Stroke({ 
+              color: isSelected ? '#000' : '#fff',  // Black border for selected elements
+              width: isSelected ? 3 : 2  // Thicker border for selected elements
+            })
           }),
           text: new Text({
             text: markerText,
-            font: 'bold 12px Arial',
+            font: fontSize,
             fill: new Fill({ color: '#333' }),
-            stroke: new Stroke({ color: '#fff', width: 3 }),
+            stroke: new Stroke({ 
+              color: '#fff', 
+              width: isSelected ? 4 : 3  // Thicker text outline for selected elements
+            }),
             offsetY: -20
           })
         }));
@@ -470,12 +498,39 @@ export class MapComponent implements OnInit, AfterViewInit {
         markerFeature.set('manualElement', true);
         this.vectorSource.addFeature(markerFeature);
       });
+      
+      // If track has multiple waypoints, create a line connecting them
+      if (lineCoordinates.length > 1) {
+        const lineFeature = new Feature({
+          geometry: new LineString(lineCoordinates),
+          name: `${track.name}-line`,
+          trackId: track.id
+        });
+        
+        // Enhanced line styling for selected track
+        const lineWidth = isSelected ? 5 : 3;  // Wider line for selected track
+        
+        lineFeature.setStyle(new Style({
+          stroke: new Stroke({
+            color: trackColor,
+            width: lineWidth,
+            lineDash: isSelected ? [5, 8] : [1, 5]  // Different dash pattern for selected track
+          })
+        }));
+        
+        lineFeature.set('trackLine', true);
+        this.vectorSource.addFeature(lineFeature);
+      }
     });
   }
 
   closeElementDetails(): void {
     this.elementDetailsVisible = false;
     this.selectedElement = null;
+    this.selectedTrackId = null;  // Clear the selected track ID
+    
+    // Update the markers to remove highlighting
+    this.updateManualTrackMarkers();
   }
 
   /**
