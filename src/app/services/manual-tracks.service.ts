@@ -5,7 +5,7 @@ import { TrackCoordinate } from '../track-panel/track-panel.component';
 export interface ManualTrack {
   id: number;
   name: string;
-  startingPosition: TrackCoordinate;
+  waypoints: TrackCoordinate[];
 }
 
 @Injectable({
@@ -46,7 +46,31 @@ export class ManualTracksService {
     this.tracksSubject.next(this.tracks);
   }
 
+  /**
+   * Debug method to log the current manual tracks.
+   */
   debugTracks(): void {
     console.log('Current manual tracks:', this.tracks);
+  }
+
+  /**
+   * Gets a track by its ID
+   * @param id - The ID of the track to get
+   * @returns The track with the specified ID, or undefined if not found
+   */
+  getTrackById(id: number): ManualTrack | undefined {
+    return this.tracks.find(track => track.id === id);
+  }
+
+  /**
+   * Updates an existing track
+   * @param track - The updated track (must have an ID that matches an existing track)
+   */
+  updateTrack(track: ManualTrack): void {
+    const index = this.tracks.findIndex(t => t.id === track.id);
+    if (index !== -1) {
+      this.tracks[index] = track;
+      this.tracksSubject.next([...this.tracks]);
+    }
   }
 } 

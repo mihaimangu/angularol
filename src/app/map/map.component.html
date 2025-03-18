@@ -26,7 +26,7 @@
   (save)="onSaveTrack($event)">
 </app-track-panel>
 
-<!-- Manual Elements Table -->
+<!-- Manual Tracks Table -->
 <div class="manual-tracks-table">
   <h3>Manual Elements</h3>
   <table>
@@ -34,16 +34,18 @@
       <tr>
         <th>ID</th>
         <th>Name</th>
-        <th>Latitude</th>
-        <th>Longitude</th>
+        <th>Waypoints</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let element of manualTracks">
-        <td>{{ element.id }}</td>
-        <td>{{ element.name }}</td>
-        <td>{{ element.startingPosition.lat }}</td>
-        <td>{{ element.startingPosition.lon }}</td>
+      <tr *ngFor="let track of manualTracks">
+        <td>{{ track.id }}</td>
+        <td>{{ track.name }}</td>
+        <td>{{ track.waypoints.length }}</td>
+        <td>
+          <button (click)="addWaypointToElement(track.id)" class="add-waypoint-btn">Add Waypoint</button>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -57,7 +59,12 @@
   </div>
   <div class="panel-content">
     <p><strong>Name:</strong> {{ selectedElement?.name }}</p>
-    <p><strong>Latitude:</strong> {{ selectedElement?.coordinate.lat }}</p>
-    <p><strong>Longitude:</strong> {{ selectedElement?.coordinate.lon }}</p>
+    <h4>Waypoints</h4>
+    <div class="waypoints-list">
+      <div class="waypoint-item" *ngFor="let waypoint of selectedElement?.waypoints; let i = index">
+        <span class="waypoint-index">{{ i + 1 }}</span>
+        <span class="waypoint-coords">Lat: {{ waypoint.lat }}, Lon: {{ waypoint.lon }}</span>
+      </div>
+    </div>
   </div>
 </div>

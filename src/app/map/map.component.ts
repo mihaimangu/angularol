@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -48,6 +48,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   trackPanelVisible: boolean = false;
   trackCoordinates: TrackCoordinate[] = [];
   manualTracks: ManualTrack[] = [];
+  elementDetailsVisible: boolean = false;
+  selectedElement: { name: string, waypoints: { lat: number, lon: number }[] } | null = null;
   
   // Store the clicked coordinates for track creation
   private clickedCoordinates: number[] = [];
@@ -56,7 +58,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
   @ViewChild(TrackPanelComponent) trackPanelComponent!: TrackPanelComponent;
 
-  constructor(private manualTracksService: ManualTracksService) { }
+  constructor(private manualTracksService: ManualTracksService, private ngZone: NgZone) { }
 
   ngOnInit(): void {
     this.manualTracksService.getTracks().subscribe((tracks: ManualTrack[]) => {
@@ -157,31 +159,66 @@ export class MapComponent implements OnInit, AfterViewInit {
         
         this.map.addOverlay(popupOverlay);
         
-        // Add click handler to show popup when clicking on the feature
+        // Add click handler to show popup or element details when clicking on features
         this.map.on('click', (evt) => {
-          // Hide context menu on regular click
-          this.contextMenuVisible = false;
-          
-          const feature = this.map.forEachFeatureAtPixel(evt.pixel, (feature) => feature);
-          
-          if (feature && feature === eiffelTowerFeature) {
-            const geometry = feature.getGeometry();
-            if (geometry && geometry instanceof Point) {
-              const coordinates = geometry.getCoordinates();
-              
-              // Set popup content
-              this.popupTitle = feature.get('name');
-              this.popupContent = feature.get('description');
-              this.popupLink = 'https://en.wikipedia.org/wiki/Eiffel_Tower';
-              this.popupVisible = true;
-              
-              // Position the popup
-              popupOverlay.setPosition(coordinates);
+          this.ngZone.run(() => {
+            console.log('Map click event:', evt);
+            // Hide context menu on regular click
+            this.contextMenuVisible = false;
+
+            const feature = this.map.forEachFeatureAtPixel(evt.pixel, (feature) => feature, { hitTolerance: 15 });
+            console.log('Clicked feature:', feature);
+
+            if (feature) {
+              if (feature === eiffelTowerFeature) {
+                const geometry = feature.getGeometry();
+                if (geometry && geometry instanceof Point) {
+                  const coordinates = geometry.getCoordinates();
+                  // Set popup content for Eiffel Tower
+                  this.popupTitle = feature.get('name');
+                  this.popupContent = feature.get('description');
+                  this.popupLink = 'https://en.wikipedia.org/wiki/Eiffel_Tower';
+                  this.popupVisible = true;
+                  // Hide element details panel if open
+                  this.elementDetailsVisible = false;
+                  this.selectedElement = null;
+                  // Position the popup
+                  popupOverlay.setPosition(coordinates);
+                }
+              } else if (feature.get('manualElement')) {
+                console.log('Manual element marker clicked');
+                // Handle click on manual element marker
+                this.popupVisible = false;
+                popupOverlay.setPosition(undefined);
+                const geometry = feature.getGeometry();
+                if (geometry && geometry instanceof Point) {
+                  const lonlat = toLonLat(geometry.getCoordinates());
+                  const trackId = feature.get('trackId');
+                  // Find the track with this ID
+                  const track = this.manualTracks.find(t => t.id === trackId);
+                  if (track) {
+                    this.selectedElement = {
+                      name: track.name,
+                      waypoints: [...track.waypoints]
+                    };
+                    this.elementDetailsVisible = true;
+                  }
+                }
+              } else {
+                // For other features, hide both popups and panels
+                this.popupVisible = false;
+                this.elementDetailsVisible = false;
+                this.selectedElement = null;
+                popupOverlay.setPosition(undefined);
+              }
+            } else {
+              // No feature clicked, hide all popups/panels
+              this.popupVisible = false;
+              this.elementDetailsVisible = false;
+              this.selectedElement = null;
+              popupOverlay.setPosition(undefined);
             }
-          } else {
-            this.popupVisible = false;
-            popupOverlay.setPosition(undefined);
-          }
+          });
         });
         
         // Add context menu on right-click
@@ -352,7 +389,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (this.clickedCoordinates && this.clickedCoordinates.length >= 2) {
       const lonLat = toLonLat(this.clickedCoordinates);
       const trackCoordinate: TrackCoordinate = { lat: lonLat[1], lon: lonLat[0] };
-      this.manualTracksService.addTrack({ name, startingPosition: trackCoordinate });
+      this.manualTracksService.addTrack({ 
+        name, 
+        waypoints: [trackCoordinate] // Initialize with a single waypoint
+      });
       console.log('Manual element added:', name, trackCoordinate);
     }
   }
@@ -369,29 +409,76 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     // Add a marker for each manual track with its name as a label
     this.manualTracks.forEach(track => {
-      const coordinates = fromLonLat([track.startingPosition.lon, track.startingPosition.lat]);
-      const markerFeature = new Feature({
-        geometry: new Point(coordinates),
-        name: track.name
+      // Process each waypoint in the track
+      track.waypoints.forEach((waypoint, index) => {
+        const coordinates = fromLonLat([waypoint.lon, waypoint.lat]);
+        const markerFeature = new Feature({
+          geometry: new Point(coordinates),
+          name: track.name,
+          trackId: track.id,
+          waypointIndex: index
+        });
+
+        // Style for the marker - use different colors for first vs other waypoints
+        const markerColor = index === 0 ? 'rgba(0, 128, 255, 0.8)' : 'rgba(255, 128, 0, 0.8)';
+        const markerText = index === 0 ? track.name : `${track.name} (pt ${index + 1})`;
+        
+        markerFeature.setStyle(new Style({
+          image: new Circle({
+            radius: 8,
+            fill: new Fill({ color: markerColor }),
+            stroke: new Stroke({ color: '#fff', width: 2 })
+          }),
+          text: new Text({
+            text: markerText,
+            font: 'bold 12px Arial',
+            fill: new Fill({ color: '#333' }),
+            stroke: new Stroke({ color: '#fff', width: 3 }),
+            offsetY: -20
+          })
+        }));
+
+        markerFeature.set('manualElement', true);
+        this.vectorSource.addFeature(markerFeature);
       });
-
-      markerFeature.setStyle(new Style({
-        image: new Circle({
-          radius: 8,
-          fill: new Fill({ color: 'rgba(0, 128, 255, 0.8)' }),
-          stroke: new Stroke({ color: '#fff', width: 2 })
-        }),
-        text: new Text({
-          text: track.name,
-          font: 'bold 12px Arial',
-          fill: new Fill({ color: '#333' }),
-          stroke: new Stroke({ color: '#fff', width: 3 }),
-          offsetY: -20
-        })
-      }));
-
-      markerFeature.set('manualElement', true);
-      this.vectorSource.addFeature(markerFeature);
     });
+  }
+
+  closeElementDetails(): void {
+    this.elementDetailsVisible = false;
+    this.selectedElement = null;
+  }
+
+  /**
+   * Adds a waypoint to the specified element
+   * @param elementId - The ID of the element to add a waypoint to
+   */
+  addWaypointToElement(elementId: number): void {
+    // Get the track
+    const track = this.manualTracksService.getTrackById(elementId);
+    if (!track) {
+      alert('Element not found!');
+      return;
+    }
+
+    // Show a modal to let the user know what to do
+      const clickListener = this.map.once('click', (evt) => {
+        // Get the coordinates of the click
+        const lonlat = toLonLat(evt.coordinate);
+        
+        // Create a copy of the track
+        const updatedTrack = { ...track };
+        
+        // Add the new waypoint to the waypoints array
+        updatedTrack.waypoints = [...track.waypoints, { lat: lonlat[1], lon: lonlat[0] }];
+        
+        // Update the track in the service
+        this.manualTracksService.updateTrack(updatedTrack);
+        
+        // Update the markers
+        this.updateManualTrackMarkers();
+        
+        // Notify the user
+      });
   }
 }
