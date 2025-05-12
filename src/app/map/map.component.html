@@ -27,16 +27,28 @@
 </app-track-panel>
 
 <!-- Time Picker -->
-<div class="time-picker-container">
-  <h3>Map Time Control</h3>
+<div class="time-picker-container" [ngClass]="{'rtl': useArabic}">
+  <div class="time-picker-header">
+    <h3>{{ getLabel('Map Time Control', 'التحكم في وقت الخريطة') }}</h3>
+    <button class="language-toggle" (click)="toggleLanguage()">
+      {{ getLabel('العربية', 'English') }}
+    </button>
+  </div>
   <div class="time-picker-controls">
-    <div class="date-time-picker">
-      <label for="map-time">Time:</label>
-      <input type="time" id="map-time" [(ngModel)]="selectedTime" (change)="onTimeChange()">
-    </div>
+    <label class="time-label">{{ getLabel('Time:', 'الوقت:') }}</label>
+    
+    <!-- Using the TimePicker component -->
+    <app-time-picker 
+      [useArabic]="useArabic"
+      [selectedTime]="selectedTime"
+      (timeChange)="onTimeChange($event)">
+    </app-time-picker>
   </div>
   <div class="time-display" *ngIf="selectedTime">
-    <p><strong>Selected Time:</strong> {{ formatTime() }}</p>
+    <p>
+      <strong>{{ getLabel('Selected Time:', 'الوقت المحدد:') }}</strong> 
+      {{ selectedTime }}
+    </p>
   </div>
 </div>
 

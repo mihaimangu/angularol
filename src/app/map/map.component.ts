@@ -19,11 +19,19 @@ import { ContextMenuComponent } from '../context-menu/context-menu.component';
 import { TrackPanelComponent, TrackCoordinate } from '../track-panel/track-panel.component';
 import { ManualTracksService } from '../services/manual-tracks.service';
 import { ManualTrack } from '../services/manual-tracks.service';
+import { TimePickerComponent } from '../time-picker/time-picker.component';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule, FormsModule, PopupComponent, ContextMenuComponent, TrackPanelComponent],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    PopupComponent, 
+    ContextMenuComponent, 
+    TrackPanelComponent,
+    TimePickerComponent
+  ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss'
 })
@@ -56,7 +64,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   // Store the clicked coordinates for track creation
   private clickedCoordinates: number[] = [];
   
-  // Add this color palette array as a class property after the other properties
+  // Color palette array for track coloring
   private colorPalette: string[] = [
     'rgba(66, 133, 244, 0.8)',   // Blue
     'rgba(219, 68, 55, 0.8)',    // Red
@@ -80,11 +88,13 @@ export class MapComponent implements OnInit, AfterViewInit {
     'rgba(0, 150, 136, 0.8)'     // Teal 2
   ];
   
-  // Add a new class property to track the currently selected track ID
+  // Selected track ID for highlighting
   private selectedTrackId: number | null = null;
   
   // Time picker properties
   selectedTime: string = new Date().toTimeString().slice(0, 5);
+  // Arabic UI flag
+  useArabic: boolean = true;
   
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
@@ -571,6 +581,42 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   /**
+   * Convert Western numerals to Arabic numerals
+   */
+  convertToArabicNumerals(text: string): string {
+    return text.replace(/[0-9]/g, match => this.arabicNumerals[match] || match);
+  }
+
+  /**
+   * Get the hours in appropriate numerals based on the selected language
+   */
+  getHours(): string[] {
+    if (this.useArabic) {
+      return this.hoursForSelect.map(hour => this.convertToArabicNumerals(hour));
+    }
+    return this.hoursForSelect;
+  }
+
+  /**
+   * Get the minutes in appropriate numerals based on the selected language
+   */
+  getMinutes(): string[] {
+    if (this.useArabic) {
+      return this.minutesForSelect.map(minute => this.convertToArabicNumerals(minute));
+    }
+    return this.minutesForSelect;
+  }
+
+  /**
+   * Handle time change event from time picker component
+   */
+  onTimeChange(time: string): void {
+    this.selectedTime = time;
+    console.log('Time changed:', this.selectedTime);
+    // Here you can implement logic to update map elements based on time
+  }
+
+  /**
    * Format the time for display
    */
   formatTime(): string {
@@ -579,20 +625,31 @@ export class MapComponent implements OnInit, AfterViewInit {
       const today = new Date();
       const timeDate = new Date(today.toDateString() + ' ' + this.selectedTime);
       
-      // Return formatted time (e.g., "3:45 PM")
-      return timeDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      // Get standard English format for debugging
+      const englishTime = timeDate.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      });
+
+      // Return formatted time in Arabic locale if enabled
+      if (this.useArabic) {
+        const arabicHour = this.convertToArabicNumerals(this.selectedHour);
+        const arabicMinute = this.convertToArabicNumerals(this.selectedMinute);
+        const arabicAmPm = (this.selectedAmPm === 'AM') ? 'ص' : 'م';
+        
+        // Manual Arabic time format
+        const arabicTimeWithNumerals = `${arabicHour}:${arabicMinute} ${arabicAmPm}`;
+        
+        // Return both for debugging, wrapped in HTML for styling
+        return `<span class="arabic-numerals">${arabicTimeWithNumerals}</span> <span class="english-debug">(${englishTime})</span>`;
+      } else {
+        return englishTime;
+      }
     }
     return '';
   }
   
-  /**
-   * Handle time change events
-   */
-  onTimeChange(): void {
-    console.log('Time changed:', this.formatTime());
-    // Here you can implement logic to update map elements based on time
-  }
-
   /**
    * Delete a manual track
    * @param trackId - ID of the track to delete
@@ -606,5 +663,20 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.closeElementDetails();
       }
     }
+  }
+
+  /**
+   * Get text for UI labels based on selected language
+   */
+  getLabel(english: string, arabic: string): string {
+    return this.useArabic ? arabic : english;
+  }
+
+  /**
+   * Toggle between Arabic and English interfaces
+   */
+  toggleLanguage(): void {
+    this.useArabic = !this.useArabic;
+    console.log('Language changed to:', this.useArabic ? 'Arabic' : 'English');
   }
 }

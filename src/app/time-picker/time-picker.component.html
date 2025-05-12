@@ -1,0 +1,34 @@
+<!-- Custom time selection -->
+<div class="custom-time-picker" [ngClass]="{'rtl': useArabic}">
+  <!-- Hour select -->
+  <select [(ngModel)]="selectedHour" (change)="updateTime()" class="time-select hour-select">
+    <option *ngFor="let hour of hoursForSelect" [value]="hour">
+      {{ useArabic ? convertToArabicNumerals(hour) : hour }}
+    </option>
+  </select>
+
+  <span class="time-separator">:</span>
+
+  <!-- Minute select -->
+  <select [(ngModel)]="selectedMinute" (change)="updateTime()" class="time-select minute-select">
+    <option *ngFor="let minute of minutesForSelect" [value]="minute">
+      {{ useArabic ? convertToArabicNumerals(minute) : minute }}
+    </option>
+  </select>
+
+  <!-- AM/PM select -->
+  <select [(ngModel)]="selectedAmPm" (change)="updateTime()" class="time-select ampm-select">
+    <option *ngFor="let ampm of amPmOptions" [value]="ampm">
+      {{ useArabic ? (ampm === 'AM' ? 'ص' : 'م') : ampm }}
+    </option>
+  </select>
+  
+  <!-- Hidden original time input for form submission if needed -->
+  <input type="time" [(ngModel)]="selectedTime" class="hidden-time-input">
+</div>
+
+<!-- Time display for reference (can be hidden if not needed) -->
+<div *ngIf="false" class="time-display">
+  <span *ngIf="useArabic" class="arabic-time" [innerHTML]="formatTime()"></span>
+  <span *ngIf="!useArabic">{{ formatTime() }}</span>
+</div>
