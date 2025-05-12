@@ -37,10 +37,11 @@
   <div class="time-picker-controls">
     <label class="time-label">{{ getLabel('Time:', 'الوقت:') }}</label>
     
-    <!-- Using the TimePicker component -->
+    <!-- Using the TimePicker component with defaultTime -->
     <app-time-picker 
       [useArabic]="useArabic"
       [selectedTime]="selectedTime"
+      [defaultTime]="'06:23'"
       (timeChange)="onTimeChange($event)">
     </app-time-picker>
   </div>

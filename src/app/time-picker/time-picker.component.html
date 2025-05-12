@@ -27,8 +27,8 @@
   <input type="time" [(ngModel)]="selectedTime" class="hidden-time-input">
 </div>
 
-<!-- Time display for reference (can be hidden if not needed) -->
-<div *ngIf="false" class="time-display">
+<!-- Time display (visible by default for better user experience) -->
+<div class="time-display">
   <span *ngIf="useArabic" class="arabic-time" [innerHTML]="formatTime()"></span>
   <span *ngIf="!useArabic">{{ formatTime() }}</span>
 </div>

@@ -584,72 +584,67 @@ export class MapComponent implements OnInit, AfterViewInit {
    * Convert Western numerals to Arabic numerals
    */
   convertToArabicNumerals(text: string): string {
-    return text.replace(/[0-9]/g, match => this.arabicNumerals[match] || match);
+    // Define Arabic numerals mapping
+    const arabicNumerals: { [key: string]: string } = {
+      '0': '٠',
+      '1': '١',
+      '2': '٢',
+      '3': '٣',
+      '4': '٤',
+      '5': '٥',
+      '6': '٦',
+      '7': '٧',
+      '8': '٨',
+      '9': '٩'
+    };
+    return text.replace(/[0-9]/g, match => arabicNumerals[match] || match);
   }
 
   /**
    * Get the hours in appropriate numerals based on the selected language
    */
   getHours(): string[] {
+    const hoursForSelect = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
     if (this.useArabic) {
-      return this.hoursForSelect.map(hour => this.convertToArabicNumerals(hour));
+      return hoursForSelect.map(hour => this.convertToArabicNumerals(hour));
     }
-    return this.hoursForSelect;
+    return hoursForSelect;
   }
 
   /**
    * Get the minutes in appropriate numerals based on the selected language
    */
   getMinutes(): string[] {
+    const minutesForSelect = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', 
+      '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', 
+      '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', 
+      '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', 
+      '51', '52', '53', '54', '55', '56', '57', '58', '59'];
     if (this.useArabic) {
-      return this.minutesForSelect.map(minute => this.convertToArabicNumerals(minute));
+      return minutesForSelect.map(minute => this.convertToArabicNumerals(minute));
     }
-    return this.minutesForSelect;
+    return minutesForSelect;
   }
 
   /**
    * Handle time change event from time picker component
+   * @param time - The selected time in HH:MM format
    */
   onTimeChange(time: string): void {
-    this.selectedTime = time;
-    console.log('Time changed:', this.selectedTime);
-    // Here you can implement logic to update map elements based on time
-  }
-
-  /**
-   * Format the time for display
-   */
-  formatTime(): string {
-    if (this.selectedTime) {
-      // Create a Date object with today's date and the selected time
-      const today = new Date();
-      const timeDate = new Date(today.toDateString() + ' ' + this.selectedTime);
-      
-      // Get standard English format for debugging
-      const englishTime = timeDate.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      });
-
-      // Return formatted time in Arabic locale if enabled
-      if (this.useArabic) {
-        const arabicHour = this.convertToArabicNumerals(this.selectedHour);
-        const arabicMinute = this.convertToArabicNumerals(this.selectedMinute);
-        const arabicAmPm = (this.selectedAmPm === 'AM') ? 'ص' : 'م';
-        
-        // Manual Arabic time format
-        const arabicTimeWithNumerals = `${arabicHour}:${arabicMinute} ${arabicAmPm}`;
-        
-        // Return both for debugging, wrapped in HTML for styling
-        return `<span class="arabic-numerals">${arabicTimeWithNumerals}</span> <span class="english-debug">(${englishTime})</span>`;
-      } else {
-        return englishTime;
-      }
+    this.selectedTime = time; // time is already in HH:MM format from the time picker
+    console.log('Map Component - Time changed to:', this.selectedTime);
+    
+    // Here you can add any additional logic to update map elements based on time
+    // For example, show/hide features, change styling, etc.
+    
+    // Example: Update the map title to show the selected time
+    const mapTitle = document.querySelector('.ol-attribution') as HTMLElement;
+    if (mapTitle) {
+      const timeLabel = this.useArabic ? 'الوقت:' : 'Time:';
+      mapTitle.innerHTML = `${timeLabel} ${this.selectedTime}`;
     }
-    return '';
   }
-  
+
   /**
    * Delete a manual track
    * @param trackId - ID of the track to delete

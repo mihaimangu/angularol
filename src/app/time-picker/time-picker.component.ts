@@ -2,6 +2,10 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+/**
+ * A standalone time picker component with support for Arabic and English languages.
+ * Provides hour, minute and AM/PM selection with proper time formatting.
+ */
 @Component({
   selector: 'app-time-picker',
   standalone: true,
@@ -13,6 +17,7 @@ export class TimePickerComponent implements OnInit {
   // Inputs
   @Input() useArabic: boolean = false;
   @Input() selectedTime: string = new Date().toTimeString().slice(0, 5);
+  @Input() defaultTime: string = '06:23'; // Default time (6:23 AM)
   
   // Outputs
   @Output() timeChange = new EventEmitter<string>();
@@ -20,7 +25,7 @@ export class TimePickerComponent implements OnInit {
   // Component properties
   selectedHour: string = '06';
   selectedMinute: string = '00';
-  selectedAmPm: string = 'PM';
+  selectedAmPm: string = 'AM';
   
   // Arabic numerals mapping
   private arabicNumerals: { [key: string]: string } = {
@@ -50,11 +55,18 @@ export class TimePickerComponent implements OnInit {
   amPmOptions: string[] = ['AM', 'PM'];
   
   ngOnInit(): void {
+    // Use defaultTime if provided, otherwise use selectedTime
+    this.selectedTime = this.defaultTime || this.selectedTime;
     this.initializeTimeSelects();
+    
+    // Initial time change event emission
+    this.updateTime();
   }
   
   /**
    * Convert Western numerals to Arabic numerals
+   * @param text Text containing Western numerals to convert
+   * @returns Text with converted Arabic numerals
    */
   convertToArabicNumerals(text: string): string {
     return text.replace(/[0-9]/g, match => this.arabicNumerals[match] || match);
@@ -76,8 +88,9 @@ export class TimePickerComponent implements OnInit {
     const formattedHour = hour.toString().padStart(2, '0');
     this.selectedTime = `${formattedHour}:${this.selectedMinute}`;
     
-    // Emit the time change event
+    // Emit the time change event with HH:MM format
     this.timeChange.emit(this.selectedTime);
+    console.log('Time Picker - Time changed to:', this.selectedTime);
   }
   
   /**
@@ -106,7 +119,17 @@ export class TimePickerComponent implements OnInit {
   }
   
   /**
-   * Format the time for display
+   * Get the current time as a formatted string in HH:MM format
+   * @returns Time string in 24-hour format (HH:MM)
+   */
+  getTimeString(): string {
+    // Make sure we're returning the time in HH:MM format
+    return this.selectedTime;
+  }
+  
+  /**
+   * Format the time for display with Arabic support
+   * @returns Formatted time string with appropriate language formatting
    */
   formatTime(): string {
     if (this.selectedTime) {
@@ -130,10 +153,11 @@ export class TimePickerComponent implements OnInit {
         // Manual Arabic time format
         const arabicTimeWithNumerals = `${arabicHour}:${arabicMinute} ${arabicAmPm}`;
         
-        // Return both for debugging, wrapped in HTML for styling
-        return `<span class="arabic-numerals">${arabicTimeWithNumerals}</span> <span class="english-debug">(${englishTime})</span>`;
+        // Return both for reference
+        return `<span class="arabic-numerals">${arabicTimeWithNumerals}</span> <span class="english-debug">(${englishTime}) [${this.getTimeString()}]</span>`;
       } else {
-        return englishTime;
+        // Return standard format with 24-hour format in brackets for reference
+        return `${englishTime} [${this.getTimeString()}]`;
       }
     }
     return '';
