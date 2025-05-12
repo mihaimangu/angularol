@@ -1,5 +1,6 @@
 import { Component, OnInit, AfterViewInit, ViewChild, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
@@ -22,7 +23,7 @@ import { ManualTrack } from '../services/manual-tracks.service';
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule, PopupComponent, ContextMenuComponent, TrackPanelComponent],
+  imports: [CommonModule, FormsModule, PopupComponent, ContextMenuComponent, TrackPanelComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss'
 })
@@ -81,6 +82,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   
   // Add a new class property to track the currently selected track ID
   private selectedTrackId: number | null = null;
+  
+  // Time picker properties
+  selectedTime: string = new Date().toTimeString().slice(0, 5);
   
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
@@ -564,5 +568,43 @@ export class MapComponent implements OnInit, AfterViewInit {
         
         // Notify the user
       });
+  }
+
+  /**
+   * Format the time for display
+   */
+  formatTime(): string {
+    if (this.selectedTime) {
+      // Create a Date object with today's date and the selected time
+      const today = new Date();
+      const timeDate = new Date(today.toDateString() + ' ' + this.selectedTime);
+      
+      // Return formatted time (e.g., "3:45 PM")
+      return timeDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+    return '';
+  }
+  
+  /**
+   * Handle time change events
+   */
+  onTimeChange(): void {
+    console.log('Time changed:', this.formatTime());
+    // Here you can implement logic to update map elements based on time
+  }
+
+  /**
+   * Delete a manual track
+   * @param trackId - ID of the track to delete
+   */
+  deleteManualTrack(trackId: number): void {
+    if (confirm('Are you sure you want to delete this track?')) {
+      this.manualTracksService.removeTrack(trackId);
+      
+      // If the deleted track was selected, close the element details panel
+      if (trackId === this.selectedTrackId) {
+        this.closeElementDetails();
+      }
+    }
   }
 }

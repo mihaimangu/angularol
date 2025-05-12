@@ -26,6 +26,20 @@
   (save)="onSaveTrack($event)">
 </app-track-panel>
 
+<!-- Time Picker -->
+<div class="time-picker-container">
+  <h3>Map Time Control</h3>
+  <div class="time-picker-controls">
+    <div class="date-time-picker">
+      <label for="map-time">Time:</label>
+      <input type="time" id="map-time" [(ngModel)]="selectedTime" (change)="onTimeChange()">
+    </div>
+  </div>
+  <div class="time-display" *ngIf="selectedTime">
+    <p><strong>Selected Time:</strong> {{ formatTime() }}</p>
+  </div>
+</div>
+
 <!-- Manual Tracks Table -->
 <div class="manual-tracks-table">
   <h3>Manual Elements</h3>
@@ -44,6 +58,7 @@
         <td>{{ track.name }}</td>
         <td>{{ track.waypoints.length }}</td>
         <td>
+          <button (click)="deleteManualTrack(track.id)" class="delete-btn">Delete</button>
           <button (click)="addWaypointToElement(track.id)" class="add-waypoint-btn">Add Waypoint</button>
         </td>
       </tr>
