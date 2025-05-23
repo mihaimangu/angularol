@@ -1,0 +1,15 @@
+<div *ngIf="isOpened" class="search-panel-container">
+  <input 
+    type="text" 
+    [(ngModel)]="searchQuery" 
+    (input)="onSearchQueryChange()" 
+    placeholder="Search items..." 
+    class="search-panel-input" />
+  <ul class="search-panel-list">
+    <li *ngFor="let item of searchResults" 
+        (click)="selectSearchItem(item)"
+        [class.selected]="selectedItem?.id === item.id">
+      {{ item.name }}
+    </li>
+  </ul>
+</div> 
