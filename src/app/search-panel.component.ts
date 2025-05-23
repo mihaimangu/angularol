@@ -8,7 +8,7 @@ import { Attraction } from './services/attractions.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div style="width: 250px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 16px;">
+    <div *ngIf="isOpened" style="width: 250px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 16px;">
       <input 
         type="text" 
         [(ngModel)]="searchQuery" 
@@ -29,6 +29,7 @@ import { Attraction } from './services/attractions.service';
 })
 export class SearchPanelComponent {
   @Input() items: Attraction[] = [];
+  @Input() isOpened: boolean = false;
   @Output() itemSelected = new EventEmitter<Attraction>();
 
   searchQuery: string = '';
@@ -45,7 +46,6 @@ export class SearchPanelComponent {
   }
 
   selectSearchItem(item: Attraction): void {
-    debugger; 
     this.selectedItem = item;
     this.itemSelected.emit(item);
   }

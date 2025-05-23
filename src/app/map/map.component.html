@@ -106,8 +106,9 @@
   {{ showSearchPanel ? 'Close Search' : 'Open Search' }}
 </button>
 
-<app-search-panel *ngIf="showSearchPanel"
+<app-search-panel
   style="position: absolute; top: 60px; right: 20px; z-index: 1000;"
   [items]="attractions"
+  [isOpened]="showSearchPanel"
   (itemSelected)="onSearchPanelItemSelected($event)">
 </app-search-panel>
