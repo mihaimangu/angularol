@@ -23,9 +23,6 @@ import { FormsModule } from '@angular/forms';
           {{ item.name }}
         </li>
       </ul>
-      <div *ngIf="selectedItem" style="margin-top: 10px; font-size: 14px; color: #3f51b5;">
-        Selected: <strong>{{ selectedItem.name }}</strong>
-      </div>
     </div>
   `
 })

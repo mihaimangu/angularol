@@ -21,6 +21,7 @@ import { ManualTracksService } from '../services/manual-tracks.service';
 import { ManualTrack } from '../services/manual-tracks.service';
 import { TimePickerComponent } from '../time-picker/time-picker.component';
 import { SearchPanelComponent } from '../search-panel.component';
+import { AttractionsService } from '../services/attractions.service';
 
 
 
@@ -108,12 +109,15 @@ export class MapComponent implements OnInit, AfterViewInit {
   showSearchPanel: boolean = false;
   selectedItem: { id: number, name: string } | null = null;
   
+  // Attractions near the Eiffel Tower
+  attractions: { id: number, name: string }[] = [];
+  
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
   @ViewChild(TrackPanelComponent) trackPanelComponent!: TrackPanelComponent;
   @ViewChild(SearchPanelComponent) searchPanelComponent!: SearchPanelComponent;
 
-  constructor(private manualTracksService: ManualTracksService, private ngZone: NgZone) { }
+  constructor(private manualTracksService: ManualTracksService, private ngZone: NgZone, private attractionsService: AttractionsService) { }
 
   ngOnInit(): void {
     this.manualTracksService.getTracks().subscribe((tracks: ManualTrack[]) => {
@@ -124,6 +128,11 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
     // Initialize external pickers from selectedTime
     this.setExternalPickersFromSelectedTime();
+
+    // Fetch attractions from mock API
+    this.attractionsService.getAttractions().subscribe(data => {
+      this.attractions = data;
+    });
   }
 
   ngAfterViewInit(): void {

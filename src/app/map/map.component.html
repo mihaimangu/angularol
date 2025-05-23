@@ -108,9 +108,6 @@
 
 <app-search-panel *ngIf="showSearchPanel"
   style="position: absolute; top: 60px; right: 20px; z-index: 1000;"
+  [items]="attractions"
   (itemSelected)="onSearchPanelItemSelected($event)">
 </app-search-panel>
-
-<div *ngIf="selectedItem" style="position: absolute; top: 260px; right: 20px; z-index: 1000; color: #3f51b5; background: #fff; border-radius: 6px; padding: 8px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.10);">
-  Selected: <strong>{{ selectedItem.name }}</strong>
-</div>
