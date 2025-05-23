@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './time-picker.component.html',
   styleUrl: './time-picker.component.scss'
 })
-export class TimePickerComponent implements OnInit {
+export class TimePickerComponent implements OnInit, OnChanges {
   // Inputs
   @Input() useArabic: boolean = false;
   @Input() selectedTime: string = new Date().toTimeString().slice(0, 5);
@@ -61,6 +61,12 @@ export class TimePickerComponent implements OnInit {
     
     // Initial time change event emission
     this.updateTime();
+  }
+  
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['selectedTime'] && !changes['selectedTime'].firstChange) {
+      this.initializeTimeSelects();
+    }
   }
   
   /**

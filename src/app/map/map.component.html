@@ -37,6 +37,18 @@
   <div class="time-picker-controls">
     <label class="time-label">{{ getLabel('Time:', 'الوقت:') }}</label>
     
+    <!-- External Hour/Minute Picker -->
+    <div class="external-time-picker" style="margin-bottom: 10px;">
+      <label>Set Time (External):</label>
+      <select [(ngModel)]="externalHour" (change)="onExternalPickerChange()">
+        <option *ngFor="let hour of getHours()" [value]="hour">{{ hour }}</option>
+      </select>
+      :
+      <select [(ngModel)]="externalMinute" (change)="onExternalPickerChange()">
+        <option *ngFor="let minute of getMinutes()" [value]="minute">{{ minute }}</option>
+      </select>
+    </div>
+    
     <!-- Using the TimePicker component with defaultTime -->
     <app-time-picker 
       [useArabic]="useArabic"

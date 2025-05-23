@@ -94,7 +94,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   // Time picker properties
   selectedTime: string = new Date().toTimeString().slice(0, 5);
   // Arabic UI flag
-  useArabic: boolean = true;
+  useArabic: boolean = false;
+  
+  // External hour and minute pickers
+  externalHour: string = '06';
+  externalMinute: string = '00';
   
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
@@ -109,6 +113,8 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.updateManualTrackMarkers();
       }
     });
+    // Initialize external pickers from selectedTime
+    this.setExternalPickersFromSelectedTime();
   }
 
   ngAfterViewInit(): void {
@@ -632,6 +638,7 @@ export class MapComponent implements OnInit, AfterViewInit {
    */
   onTimeChange(time: string): void {
     this.selectedTime = time; // time is already in HH:MM format from the time picker
+    this.setExternalPickersFromSelectedTime();
     console.log('Map Component - Time changed to:', this.selectedTime);
     
     // Here you can add any additional logic to update map elements based on time
@@ -673,5 +680,18 @@ export class MapComponent implements OnInit, AfterViewInit {
   toggleLanguage(): void {
     this.useArabic = !this.useArabic;
     console.log('Language changed to:', this.useArabic ? 'Arabic' : 'English');
+  }
+
+  setExternalPickersFromSelectedTime(): void {
+    if (this.selectedTime) {
+      const [hours, minutes] = this.selectedTime.split(':');
+      this.externalHour = hours.padStart(2, '0');
+      this.externalMinute = minutes.padStart(2, '0');
+    }
+  }
+
+  onExternalPickerChange(): void {
+    this.selectedTime = `${this.externalHour.padStart(2, '0')}:${this.externalMinute.padStart(2, '0')}`;
+    // Optionally, trigger any logic that should happen when selectedTime changes
   }
 }
