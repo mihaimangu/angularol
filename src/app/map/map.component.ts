@@ -21,7 +21,7 @@ import { ManualTracksService } from '../services/manual-tracks.service';
 import { ManualTrack } from '../services/manual-tracks.service';
 import { TimePickerComponent } from '../time-picker/time-picker.component';
 import { SearchPanelComponent } from '../search-panel.component';
-import { AttractionsService } from '../services/attractions.service';
+import { AttractionsService, Attraction } from '../services/attractions.service';
 
 
 
@@ -110,7 +110,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   selectedItem: { id: number, name: string } | null = null;
   
   // Attractions near the Eiffel Tower
-  attractions: { id: number, name: string }[] = [];
+  attractions: Attraction[] = [];
+  private selectedAttractionFeature: any = null;
   
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
@@ -717,7 +718,38 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.showSearchPanel = !this.showSearchPanel;
   }
 
-  onSearchPanelItemSelected(item: { id: number, name: string }): void {
-    this.selectedItem = item;
+  onSearchPanelItemSelected(item: Attraction): void {
+    // Remove previous marker if it exists
+    console.log('on search item selected', item)
+    if (this.selectedAttractionFeature && this.vectorSource) {
+      this.vectorSource.removeFeature(this.selectedAttractionFeature);
+      this.selectedAttractionFeature = null;
+    }
+    // Add new marker for the selected attraction
+    if (item && this.vectorSource) {
+      const { lon, lat, name } = item;
+      const feature = new Feature({
+        geometry: new Point(fromLonLat([lon, lat])),
+        name: name
+      });
+      feature.setStyle(
+        new Style({
+          image: new Circle({
+            radius: 10,
+            fill: new Fill({ color: 'rgba(63,81,181,0.8)' }),
+            stroke: new Stroke({ color: '#fff', width: 2 })
+          }),
+          text: new Text({
+            text: name,
+            font: 'bold 13px Arial',
+            fill: new Fill({ color: '#3f51b5' }),
+            stroke: new Stroke({ color: '#fff', width: 3 }),
+            offsetY: -18
+          })
+        })
+      );
+      this.vectorSource.addFeature(feature);
+      this.selectedAttractionFeature = feature;
+    }
   }
 }

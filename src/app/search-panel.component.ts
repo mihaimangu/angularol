@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Attraction } from './services/attractions.service';
 
 @Component({
   selector: 'app-search-panel',
@@ -27,21 +28,12 @@ import { FormsModule } from '@angular/forms';
   `
 })
 export class SearchPanelComponent {
-  @Input() items: { id: number, name: string }[] = [
-    { id: 1, name: 'Apple' },
-    { id: 2, name: 'Banana' },
-    { id: 3, name: 'Cherry' },
-    { id: 4, name: 'Date' },
-    { id: 5, name: 'Elderberry' },
-    { id: 6, name: 'Fig' },
-    { id: 7, name: 'Grape' },
-    { id: 8, name: 'Honeydew' }
-  ];
-  @Output() itemSelected = new EventEmitter<{ id: number, name: string }>();
+  @Input() items: Attraction[] = [];
+  @Output() itemSelected = new EventEmitter<Attraction>();
 
   searchQuery: string = '';
-  searchResults: { id: number, name: string }[] = [...this.items];
-  selectedItem: { id: number, name: string } | null = null;
+  searchResults: Attraction[] = [];
+  selectedItem: Attraction | null = null;
 
   ngOnInit() {
     this.searchResults = [...this.items];
@@ -52,7 +44,8 @@ export class SearchPanelComponent {
     this.searchResults = this.items.filter(item => item.name.toLowerCase().includes(query));
   }
 
-  selectSearchItem(item: { id: number, name: string }): void {
+  selectSearchItem(item: Attraction): void {
+    debugger; 
     this.selectedItem = item;
     this.itemSelected.emit(item);
   }
