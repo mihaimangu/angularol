@@ -20,6 +20,9 @@ import { TrackPanelComponent, TrackCoordinate } from '../track-panel/track-panel
 import { ManualTracksService } from '../services/manual-tracks.service';
 import { ManualTrack } from '../services/manual-tracks.service';
 import { TimePickerComponent } from '../time-picker/time-picker.component';
+import { SearchPanelComponent } from '../search-panel.component';
+
+
 
 @Component({
   selector: 'app-map',
@@ -30,7 +33,8 @@ import { TimePickerComponent } from '../time-picker/time-picker.component';
     PopupComponent, 
     ContextMenuComponent, 
     TrackPanelComponent,
-    TimePickerComponent
+    TimePickerComponent,
+    SearchPanelComponent
   ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss'
@@ -100,9 +104,14 @@ export class MapComponent implements OnInit, AfterViewInit {
   externalHour: string = '06';
   externalMinute: string = '00';
   
+  // Search panel state
+  showSearchPanel: boolean = false;
+  selectedItem: { id: number, name: string } | null = null;
+  
   @ViewChild(PopupComponent) popupComponent!: PopupComponent;
   @ViewChild(ContextMenuComponent) contextMenuComponent!: ContextMenuComponent;
   @ViewChild(TrackPanelComponent) trackPanelComponent!: TrackPanelComponent;
+  @ViewChild(SearchPanelComponent) searchPanelComponent!: SearchPanelComponent;
 
   constructor(private manualTracksService: ManualTracksService, private ngZone: NgZone) { }
 
@@ -693,5 +702,13 @@ export class MapComponent implements OnInit, AfterViewInit {
   onExternalPickerChange(): void {
     this.selectedTime = `${this.externalHour.padStart(2, '0')}:${this.externalMinute.padStart(2, '0')}`;
     // Optionally, trigger any logic that should happen when selectedTime changes
+  }
+
+  toggleSearchPanel(): void {
+    this.showSearchPanel = !this.showSearchPanel;
+  }
+
+  onSearchPanelItemSelected(item: { id: number, name: string }): void {
+    this.selectedItem = item;
   }
 }

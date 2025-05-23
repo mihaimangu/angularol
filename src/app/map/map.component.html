@@ -37,17 +37,7 @@
   <div class="time-picker-controls">
     <label class="time-label">{{ getLabel('Time:', 'الوقت:') }}</label>
     
-    <!-- External Hour/Minute Picker -->
-    <div class="external-time-picker" style="margin-bottom: 10px;">
-      <label>Set Time (External):</label>
-      <select [(ngModel)]="externalHour" (change)="onExternalPickerChange()">
-        <option *ngFor="let hour of getHours()" [value]="hour">{{ hour }}</option>
-      </select>
-      :
-      <select [(ngModel)]="externalMinute" (change)="onExternalPickerChange()">
-        <option *ngFor="let minute of getMinutes()" [value]="minute">{{ minute }}</option>
-      </select>
-    </div>
+
     
     <!-- Using the TimePicker component with defaultTime -->
     <app-time-picker 
@@ -107,4 +97,20 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Search Panel Button and Panel -->
+<button 
+  style="position: absolute; top: 20px; right: 20px; z-index: 1000;" 
+  (click)="toggleSearchPanel()">
+  {{ showSearchPanel ? 'Close Search' : 'Open Search' }}
+</button>
+
+<app-search-panel *ngIf="showSearchPanel"
+  style="position: absolute; top: 60px; right: 20px; z-index: 1000;"
+  (itemSelected)="onSearchPanelItemSelected($event)">
+</app-search-panel>
+
+<div *ngIf="selectedItem" style="position: absolute; top: 260px; right: 20px; z-index: 1000; color: #3f51b5; background: #fff; border-radius: 6px; padding: 8px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.10);">
+  Selected: <strong>{{ selectedItem.name }}</strong>
 </div>
