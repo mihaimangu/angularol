@@ -1,10 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatNativeDateModule } from '@angular/material/core';
+
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
@@ -25,6 +22,8 @@ import { ManualTracksService } from '../services/manual-tracks.service';
 import { ManualTrack } from '../services/manual-tracks.service';
 import { TimePickerComponent } from '../time-picker/time-picker.component';
 import { SearchPanelComponent } from '../search-panel/search-panel.component';
+import { DatePickerComponent } from '../date-picker/date-picker.component';
+import { HijriDatePickerComponent } from '../hijri-date-picker/hijri-date-picker.component';
 import { AttractionsService, Attraction } from '../services/attractions.service';
 
 
@@ -35,15 +34,13 @@ import { AttractionsService, Attraction } from '../services/attractions.service'
   imports: [
     CommonModule, 
     FormsModule, 
-    MatDatepickerModule,
-    MatInputModule,
-    MatFormFieldModule,
-    MatNativeDateModule,
     PopupComponent, 
     ContextMenuComponent, 
     TrackPanelComponent,
     TimePickerComponent,
-    SearchPanelComponent
+    SearchPanelComponent,
+    DatePickerComponent,
+    HijriDatePickerComponent
   ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss'
@@ -109,7 +106,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   // Date picker property
   selectedDate: Date = new Date();
   // Arabic UI flag
-  useArabic: boolean = false;
+  useArabic: boolean = true; // Default to Arabic
   
   // External hour and minute pickers
   externalHour: string = '06';
@@ -682,17 +679,15 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Handle date change event from date picker
+   * Handle date change event from date picker component
    * @param date - The selected date
    */
-  onDateChange(date: Date | null): void {
-    if (date) {
-      this.selectedDate = date;
-      console.log('Map Component - Date changed to:', this.selectedDate);
-      
-      // Here you can add any additional logic to update map elements based on date
-      // For example, show/hide features, change styling, etc.
-    }
+  onDateChange(date: Date): void {
+    this.selectedDate = date;
+    console.log('Map Component - Date changed to:', this.selectedDate);
+    
+    // Here you can add any additional logic to update map elements based on date
+    // For example, show/hide features, change styling, etc.
   }
 
   /**
@@ -723,6 +718,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   toggleLanguage(): void {
     this.useArabic = !this.useArabic;
     console.log('Language changed to:', this.useArabic ? 'Arabic' : 'English');
+    
+    // Update the time display when language changes
+    this.setExternalPickersFromSelectedTime();
   }
 
   setExternalPickersFromSelectedTime(): void {

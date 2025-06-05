@@ -1,0 +1,98 @@
+.date-picker-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  
+  // LTR direction for English/Gregorian dates
+  direction: ltr;
+  text-align: left;
+  
+  .gregorian-datepicker {
+    width: 100%;
+    
+    mat-form-field {
+      width: 100%;
+      margin: 0;
+      
+      // Clean up the outline appearance
+      .mat-mdc-form-field-outline {
+        border-radius: 6px;
+      }
+      
+      // Improve the input styling
+      .mat-mdc-form-field-input-control input {
+        text-align: left;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// Override Material Design styles for Arabic locale
+:host ::ng-deep {
+  // Clean up form field appearance
+  .mat-mdc-form-field {
+    &.mat-form-field-appearance-outline {
+      .mat-mdc-form-field-outline {
+        border-color: rgba(63, 81, 181, 0.3);
+      }
+      
+      &.mat-focused .mat-mdc-form-field-outline {
+        border-color: #3f51b5;
+        border-width: 2px;
+      }
+    }
+    
+    // Clean label styling
+    .mat-mdc-form-field-label {
+      color: #555;
+      font-size: 14px;
+    }
+    
+    // Clean hint styling
+    .mat-mdc-form-field-hint {
+      color: #777;
+      font-size: 12px;
+    }
+  }
+  
+  // Calendar styling
+  .mat-datepicker-content {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    
+    .mat-calendar {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .mat-calendar-header {
+      padding: 16px;
+      
+      .mat-calendar-arrow {
+        // Default arrow styling
+      }
+    }
+    
+    // Month/year buttons
+    .mat-calendar-period-button {
+      font-weight: 500;
+    }
+  }
+  
+  // When Arabic is enabled, adjust the calendar layout
+  .rtl .mat-datepicker-content {
+    direction: rtl;
+    
+    .mat-calendar {
+      direction: rtl;
+    }
+    
+    .mat-calendar-table {
+      direction: rtl;
+    }
+    
+    .mat-calendar-header {
+      direction: rtl;
+    }
+  }
+}

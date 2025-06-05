@@ -35,15 +35,26 @@
     </button>
   </div>
   <div class="time-picker-controls">
-    <!-- Date Picker -->
+    <!-- Date Picker Section -->
     <div class="date-picker-section">
-      <mat-form-field appearance="outline">
-        <mat-label>{{ getLabel('Date', 'التاريخ') }}</mat-label>
-        <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" (dateChange)="onDateChange($event.value)">
-        <mat-hint>{{ getLabel('MM/DD/YYYY', 'شش/يي/سسسس') }}</mat-hint>
-        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
-      </mat-form-field>
+      <!-- Hijri Date Picker for Arabic -->
+      <app-hijri-date-picker
+        *ngIf="useArabic"
+        [selectedDate]="selectedDate"
+        [label]="'التاريخ الهجري'"
+        [placeholder]="'يوم/شهر/سنة هـ'"
+        (dateChange)="onDateChange($event)">
+      </app-hijri-date-picker>
+      
+      <!-- Gregorian Date Picker for English -->
+      <app-date-picker
+        *ngIf="!useArabic"
+        [selectedDate]="selectedDate"
+        [useArabic]="false"
+        [label]="'Date'"
+        [placeholder]="'MM/DD/YYYY'"
+        (dateChange)="onDateChange($event)">
+      </app-date-picker>
     </div>
     
     <!-- Time Picker -->
