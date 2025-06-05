@@ -35,20 +35,36 @@
     </button>
   </div>
   <div class="time-picker-controls">
-    <label class="time-label">{{ getLabel('Time:', 'الوقت:') }}</label>
+    <!-- Date Picker -->
+    <div class="date-picker-section">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ getLabel('Date', 'التاريخ') }}</mat-label>
+        <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" (dateChange)="onDateChange($event.value)">
+        <mat-hint>{{ getLabel('MM/DD/YYYY', 'شش/يي/سسسس') }}</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+    </div>
     
-
-    
-    <!-- Using the TimePicker component with defaultTime -->
-    <app-time-picker 
-      [useArabic]="useArabic"
-      [selectedTime]="selectedTime"
-      [defaultTime]="'06:23'"
-      (timeChange)="onTimeChange($event)">
-    </app-time-picker>
+    <!-- Time Picker -->
+    <div class="time-picker-section">
+      <label class="time-label">{{ getLabel('Time:', 'الوقت:') }}</label>
+      
+      <!-- Using the TimePicker component with defaultTime -->
+      <app-time-picker 
+        [useArabic]="useArabic"
+        [selectedTime]="selectedTime"
+        [defaultTime]="'06:23'"
+        (timeChange)="onTimeChange($event)">
+      </app-time-picker>
+    </div>
   </div>
-  <div class="time-display" *ngIf="selectedTime">
-    <p>
+  <div class="time-display" *ngIf="selectedTime || selectedDate">
+    <p *ngIf="selectedDate">
+      <strong>{{ getLabel('Selected Date:', 'التاريخ المحدد:') }}</strong> 
+      {{ selectedDate | date:'shortDate' }}
+    </p>
+    <p *ngIf="selectedTime">
       <strong>{{ getLabel('Selected Time:', 'الوقت المحدد:') }}</strong> 
       {{ selectedTime }}
     </p>
@@ -108,7 +124,6 @@
 
 <app-search-panel
   style="position: absolute; top: 60px; right: 20px; z-index: 1000;"
-  [items]="attractions"
   [isOpened]="showSearchPanel"
   (itemSelected)="onSearchPanelItemSelected($event)">
 </app-search-panel>

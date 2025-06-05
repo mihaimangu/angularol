@@ -28,4 +28,12 @@ export class AttractionsService {
     // Simulate HTTP delay
     return of(this.mockAttractions).pipe(delay(500));
   }
+
+  getResults(query: string): Observable<Attraction[]> {
+    const lowerQuery = query.toLowerCase();
+    const filtered = this.mockAttractions.filter(attraction =>
+      attraction.name.toLowerCase().includes(lowerQuery)
+    );
+    return of(filtered).pipe(delay(300));
+  }
 } 
